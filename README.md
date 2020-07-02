@@ -8,9 +8,9 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | type constructors | Used to construct new types from existing types | `nat list` | Are written postfix |
 | function types | | `T1 ⇒ T2 ⇒ T3 ⇒ T4` or equivalently `[T1, T2, T3] ⇒ T4` |Total functions only<br>`⇒` is right associative|
 | type variables | Used in polymorphic types | `'a ⇒ 'a`<br>`list 'a`| Always preceded by `'` |
-| if statement | | `if b the t1 else t2`| `b` is of type bool, `t1` and `t2` are of the same type | Need to be enclosed in parentheses |
+| if statement | | `if b the t1 else t2`\| `b` is of type bool, `t1` and `t2` are of the same type | Need to be enclosed in parentheses |
 | let statement | substitute all free occurences of a variable in an expression with another expression | `let x = 0 in x + x` | This example would get reduced to `0 + 0` |
-| case statement | allows matching on the structual form of a term  | <pre>case l of<br> nil ⇒ ...|<br> Cons x xs ⇒ ...</pre> | Complex case patterns tend to yield complex proofs<br>Need to be enclosed in parentheses |
+| case statement | allows matching on the structual form of a term  | <pre>case l of<br> nil ⇒ ...\|<br> Cons x xs ⇒ ...</pre> | Complex case patterns tend to yield complex proofs<br>Need to be enclosed in parentheses |
 | lambda abstraction | allows definition of anonymous functions | λ x. x + 1 | |
 | formulae | terms of type `bool` | `A ∧ B --> A ` | Have logical connectives ¬ (negation), ∧ (conjunction),∨ (disjunction), and --> (implication). <br> Have quantifiers ∀ (universal quantification) ∃ (existential quantification). Nested quantifications are abreviated: `∀ x y z. P` is the same as `∀ x. ∀ y. ∀ z. P`|
 | type constraints | gives explicit information on type of variable when type inference fails | `[]::(nat list)` | |
@@ -23,17 +23,17 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | `defer` | Moves first subgoal to end | | |
 | `prefer <n>` | moves the nth subgoal to the front | | |
 | `thm theorem1 ... theoremn` | prints the specified theorems | | |
-| `datatype` | Provides an inductive definition for a type | <pre>dataype 'a list = Nil<br>| Cons 'a "'a list"</pre> | |
+| `datatype` | Provides an inductive definition for a type | <pre>dataype 'a list = Nil<br>\| Cons 'a "'a list"</pre> | |
 | linear arithmetic | Formulas that involve only ¬, ∧, ∨, −→, =, ∀, ∃, =, ≤, <, +, -, `min` and `max` || |
 | `arith` | proof methods that can solve linear arithmetic | | Exponential in number of -, `min` and `max`, since they are eliminated by case distinctions |
-| tuples | simulated by nested pairs | `(1, "a", 1.0)::nat×string×real ` ≡ `(1, ("a", 1.0))::nat×(string×real)` | Therefore have, e.g.,  `fst(snd(1, "a", 1.0)) = "a"`.<br>Large tuples become unweildy, best to prefer records  |
+| tuples | simulated by nested pairs | `(1, "a", 1.0):: nat×string×real ≡  (1, ("a", 1.0)):: nat×(string×real)` | Therefore have, e.g.,  `fst(snd(1, "a", 1.0)) = "a"`.<br>Large tuples become unweildy, best to prefer records  |
 | `unit` | types which contains exactly one element: `()` | | |
 | `type_synonym` | Used to create new type that corresponds to an existing type | `type_synonym number = nat` | Used to improve readability of theories |
-| dead/ live type arguments | type constructors allow recursion on a subset of their type arguments, these are called the _live_ arguments, all others are called _dead_ | `datatype (dead 'a, 'i) bigtree = Tip | Br 'a "'i ⇒ ('a,'i)bigtree"`| In example `'a` is type of what is being stored, `'i` is the index over which tree branches |
-| Mutual recursion | Sed to define two dataypes that depend on each other | <pre>datatype T1 = ...<br/>and T2 =...</pre> | |
+| dead/ live type arguments | type constructors allow recursion on a subset of their type arguments, these are called the _live_ arguments, all others are called _dead_ | `datatype (dead 'a, 'i) bigtree = Tip \| Br 'a "'i ⇒ ('a,'i)bigtree"`| In example `'a` is type of what is being stored, `'i` is the index over which tree branches |
+| Mutual recursion | Sed to define two dataypes that depend on each other | <pre>datatype T1 = ...<br/>and<br/> T2 =...</pre> | |
 
-##Proof methods
-###Simplification
+## Proof methods
+### Simplification
 Definition: "repeated application of equations from left to right" or equivalently "repeated applciation as `term rewriting` according to `rewriting rules`"
 - more accurate to call it rewriting, expressions may not necessarily become simpler
 - theorems declared as simplificaiton rules using `[simp]` attribute
@@ -58,7 +58,7 @@ Case splits allow simplifier to reason about each form an expression can take
 - to simplify while performing case analysis on a type T: `apply (simp split: T.split)`
     - can explicitly split statements: `apply (split T.split)`
 Good idea to enable rewrite tracing to get an idea what's going on`declare [[simp_trace]]` and maybe increase the trace depth limit: `declare [[simp_trace_depth_limit=4]]`
-###Induction
+### Induction
 Heuristics:
 - Induction used for proving theorems about recursive functions
 - Induct on the argument that is recursed on
@@ -67,15 +67,15 @@ Heuristics:
 - the RHS of an equation should be simpler than the LHSdead
 - `apply(induct_tac a and b)` used to induct on mutually recursive datatype
 
-##Finding help
-###Query in jEdit
+## Finding help
+### Query in jEdit
 - `(_::nat)` is wildcard matching anything that is of type `nat`
 - `simp: "..."`: searches specifically for rewrite rules
 - `name: ...` searches for theorems by name
 - can negate search criteria: `-name: foo` mathes all theorems who's name does not contain foo
 
 
-##Tips:
+## Tips:
 - function application binds more strongly than anything else `f x + y` means `(f x) + y`
 - `=` binds very strongly. `¬¬P = P` means `¬¬(P = P)`
 - need spaces after dots: `λx. x` not `λx.x`
@@ -83,7 +83,7 @@ Heuristics:
 - best way to quantify over a variable `x` in list `xs` is to do, `x ∈ set xs`
 - best to stick to using `Suc` and `O`, since definition of constant `1::nat` is not automatically unfolded by all commands
 
-##Jedit shortcuts
+## Jedit shortcuts
 ⇒ 
 λ
 ¬
