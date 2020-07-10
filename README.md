@@ -30,7 +30,19 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | `unit` | types which contains exactly one element: `()` | | |
 | `type_synonym` | Used to create new type that corresponds to an existing type | `type_synonym number = nat` | Used to improve readability of theories |
 | dead/ live type arguments | type constructors allow recursion on a subset of their type arguments, these are called the _live_ arguments, all others are called _dead_ | `datatype (dead 'a, 'i) bigtree = Tip \| Br 'a "'i ⇒ ('a,'i)bigtree"`| In example `'a` is type of what is being stored, `'i` is the index over which tree branches |
-| Mutual recursion | Sed to define two dataypes that depend on each other | <pre>datatype T1 = ...<br/>and<br/> T2 =...</pre> | |
+| mutual recursion | Used to define two dataypes that depend on each other | <pre>datatype T1 = ...<br/>and<br/> T2 =...</pre> | |
+| nested recursion | Recursive datatype occurs nested in itself | <pre>datatype ('v, 'f)"term" = Var 'v | App 'f ('v,'f)term list" </pre></br>A recursive function over this structure is then defined thus:</br><pre>primrec ('v 'f)term => ('v, 'f) term"</br>and substs:: ('v, 'f)term list => ('v, 'f)term list"</br>where</br>"subst s ..."|</br>"substs s ..."</pre> | Can always unfold nesting to become mutually recursive.</br> When proving fact about a term, need to simuntanesouly proove fact about nested term. |
+| `declare Let_def[simp]` | tell rewriter to expand lets | | |
+| `declare option.split[split]` | tell rewriter to split all `case`-constructs over options | | |
+| apply(...[!]) | apply tactic to all sub-goals | | |
+| size of a datatype | every datatype is equipped with a `size` function, defined as 0 for all constructors without an argument or 1 plus the sum of the sizes of all constructor arguments | | this is the size that is used in proofs of termination of recursive functions |
+|termination of total recursive functions | any lexicographic combination of size measures across arguments (c.f. Ackerman function) | | |
+|recursion induction | inducting on a datatype using the the structural form implied by a recursive equations  | `apply(indduction xs rule: f.induct)` | |
+| infix definitions | | <pre>definition xor :: "bool ⇒  bool ⇒ bool"   (infixl "[+]" 60)</br>where "A [+] B ≡ (A ∧ ¬B) ∨ (¬A ∧ B)"</pre> | Can turn infix operator into prefix function by: `([+])` |
+| named control symbols | all of form `\<^ident>`, for declaring how output will be typeset | | |
+| abbreviations | allows a complex term to be abbreviated with nice notation | <pre>abbreviation sim2 :: "'a => 'a => bool" (infix "≈" 50)</br>where "x ≈ y ≡ (x, y) ∈ sim"| Appropriate when defined concept is a simple variation on an existing one.</br>Not appropriate  |
+| source comments | like comments in other languages | `(*...*)` | |
+| formal comments | actually show up when in proof document, `-- <comment>`. Formal markup command | <pre>lemma "A --> A"</br>-- super simple, barely an inconvenience</br> by (rule impI)</pre> | |
 
 ## Proof methods
 ### Simplification
@@ -83,7 +95,17 @@ Heuristics:
 - best way to quantify over a variable `x` in list `xs` is to do, `x ∈ set xs`
 - best to stick to using `Suc` and `O`, since definition of constant `1::nat` is not automatically unfolded by all commands
 
+## Gotchas
+- Simplification may not terminate due to automatic splitting of if-statements, may need to rewrite function to use `case` statements instead
+
 ## Jedit shortcuts
+|α | `\<alpha> |
+etc for greek letters
+\<A>
+\<AA>
+|\<^sub> | subscript|
+|\<^sup> | superscript|
+
 ⇒ 
 λ
 ¬
