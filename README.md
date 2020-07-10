@@ -43,6 +43,7 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | abbreviations | allows a complex term to be abbreviated with nice notation | <pre>abbreviation sim2 :: "'a => 'a => bool" (infix "≈" 50)</br>where "x ≈ y ≡ (x, y) ∈ sim"| Appropriate when defined concept is a simple variation on an existing one.</br>Not appropriate  |
 | source comments | like comments in other languages | `(*...*)` | |
 | formal comments | actually show up when in proof document, `-- <comment>`. Formal markup command | <pre>lemma "A --> A"</br>-- super simple, barely an inconvenience</br> by (rule impI)</pre> | |
+| major premise | The first premise in an assumption list | | In `⟦P1; ...; Pn⟧ ⟹  ...` `P1` is the major premise |
 
 ## Proof methods
 ### Simplification
@@ -70,6 +71,7 @@ Case splits allow simplifier to reason about each form an expression can take
 - to simplify while performing case analysis on a type T: `apply (simp split: T.split)`
     - can explicitly split statements: `apply (split T.split)`
 Good idea to enable rewrite tracing to get an idea what's going on`declare [[simp_trace]]` and maybe increase the trace depth limit: `declare [[simp_trace_depth_limit=4]]`
+In order to apply a rewrite exactly once (and avoid looping): `apply (subst <rule>)`
 ### Induction
 Heuristics:
 - Induction used for proving theorems about recursive functions
@@ -78,6 +80,42 @@ Heuristics:
 - generalize goals for induction by universally quantifying all free variables
 - the RHS of an equation should be simpler than the LHSdead
 - `apply(induct_tac a and b)` used to induct on mutually recursive datatype
+
+## Rules
+All of the supplied rules will be applied automatically by automation procedures
+### Introduction and elimination rules
+Introduction (introduce a logical operator) rules are applied by `apply (rule ...)` elimination (eliminate logical operator) rules can also be applied by `apply (erule ...)` (which automatically matches assumption of rule with one from current premise).
+Act on instance of major premise.
+`apply (intro <intro_rule>)` repeatedly applys the provied introduction rule
+| rule name | explaination | type | notes |
+|---|---|---|---|
+| `conjI` | introduction rule for conjunction |  ⟦?P; ?Q⟧ ⟹  ?P ∧ ?Q | |
+| `conjE` | elimination rule for conjunction |   ⟦?P ∧ ?Q; ⟦?P; ?Q⟧ ⟹  ?R⟧ ⟹  ?R | |
+| `disjE` | elimination rule for disjunc | ⟦?P ∨ ?Q; ?P ⟹ ?R; ?Q ⟹ ?R⟧ ⟹ ?R | |
+| `disjI1 | introduction rule for left operand of disjunction | ?P ⟹ ?P ∨ ?Q | |
+| `disjI2 | intrdocution rule for right operand of disjunction | ?Q ⟹ ?P ∨ ?Q | |
+| `discjCI` | a form of disjunction introduction | (¬?Q=⇒?P)=⇒?P∨?Q | Allows removal of disjunction without deciding which disjunction to prove |
+| `allI` | introduction fulre of universal quantification | (⋀x. ?P x) ⟹ ∀x. ?P x | |
+| `allE` | eliminatino rule for universal quantification | ⟦∀x. ?P x; ?P ?x ⟹  ?R⟧ ⟹  ?R | |
+| `impI` | introduction rule for implication | (?P ⟹ ?Q) ⟹ ?P ⟶ ?Q | |
+| `impE` | elimination rule for implication |  ⟦?P ⟶ ?Q; ?P; ?Q ⟹ ?R⟧ ⟹ ?R | |
+| `notI` | introduction rule for negation | (?P ⟹ False) ⟹ ¬ ?P | |
+| `notE` | elimination rule for negation |  ⟦¬ ?P; ?P⟧ ⟹ ?R | |
+
+### Destruction rules
+Take apart and destroy a premise. Applied by : `apply (drule ...)`
+| rule name | explanation | type |
+|---|---|---|
+| `conjunct1` | exposes first operand of conjunction | ?P ∧ ?Q ⟹ ?P |
+| `conjunct2` | exposes second operand of conjunction | ?P ∧ ?Q ⟹ ?Q |
+
+### Other rules
+| rule name | explaination | type | |
+|---|---|---|
+| ssubst | Substitution rule: a predicate / function holds given the appropriate substiution | ⟦?t = ?s; ?P ?s⟧ ⟹ ?P ?t | Provides more control than simplification |
+
+
+
 
 ## Finding help
 ### Query in jEdit
@@ -98,14 +136,19 @@ Heuristics:
 ## Gotchas
 - Simplification may not terminate due to automatic splitting of if-statements, may need to rewrite function to use `case` statements instead
 
+## Misc
+- <pre>apply <something else> by <assumption></pre> tries to proove all remaining subgoals using assumption (if successful no need for `done`)
+
 ## Jedit shortcuts
+| symbol | what to enter |
+|---|---|
 |α | `\<alpha> |
 etc for greek letters
 \<A>
 \<AA>
 |\<^sub> | subscript|
 |\<^sup> | superscript|
-
+| [| | ⟦ |
 ⇒ 
 λ
 ¬
