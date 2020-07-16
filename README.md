@@ -44,6 +44,29 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | source comments | like comments in other languages | `(*...*)` | |
 | formal comments | actually show up when in proof document, `-- <comment>`. Formal markup command | <pre>lemma "A --> A"</br>-- super simple, barely an inconvenience</br> by (rule impI)</pre> | |
 | major premise | The first premise in an assumption list | | In `⟦P1; ...; Pn⟧ ⟹  ...` `P1` is the major premise |
+| .. | Denotes a _trivial proof_, one that holds by definition | `lift_definition sub_list :: "my_list ⇒ my_list ⇒ bool" is Set.subset .` | |
+| . | Denotes _immediate proof_ finishing a proof by single application of a standard rule | | |
+| `setup_lifting` | Declares a context when where you can use `lift_definition` | `setup_lifting type_definition_my_view` | Also allows the `transfer` tactic, which allows many proofs to be dispatched as trivial using `.` |
+| meta logic | high-level formalism used at the Pure level | | contains the operators ∧ (arbitrary value), ⟹  (express inference rules and for assumptions) , and ≡ (defines constants) |
+| `apply(rule_tac x="..." in exI)` | Instantiate existentially bound variable in conclusion with provied expression | | |
+| THE | definite description operator `THE x. P x` refers to the unique x s.t. `P x` is true | | |
+| SOME | Hilbert's ε-operator | | `∃ x. A x ≡ A(SOME x. A x)`</br>∀ x. A x ≡ A(SOME x. ¬A x)|
+| LEAST | least number operator, deontest the least x satisfying P | | `(LEAST x. P x) = (THE x. P x ⋀ (∀ y. P y⟶    x≤y))` |
+| `oops` | abandons proof | | |
+| `lemma [iff]....` | like `lemma [simp]...` but adds both ways of the equality | | |
+| `!x` | a unique x | `∃!x. ?P x ⟹ ?P (THE x. ?P x)` | |
+| `of` | allows instantiation of unbound variables by position in theorems, identifies variables in the order they appear | `mult_assoc [of x 1] | In our example `?a` gets bound to x, `?b` to `, `?c` remains unbound. To "skip" a variable and leave it unbound can do: `mult_assoc of [_ 1]`, now `?a` remains unbound. |
+| `where` | allows named instantiation of unbound variables in theorems | `mult_assoc [where b = 1]` | equivalent to `mult_assoc of [_ 1 _]` |
+| `THEN` | applies specified rule to the given theorem | `mult_1 [THEN sym]` | Given example forms a rule that is the same as `?a = 1 * ?a`. Useful patterns are: `... [THEN sym]`, `[THEN spec]` (removes universal quantifier), `... [THEN mp]` which turns implication into an inference rule |
+| `OF` | allows specialisation of facts in premise | `conjI [OF _ "x = 1"]` | given example yields the theorem: `⟦?P; (x = 1)⟧ ⟹  ?P ∧ (x = 1)`
+| `insert` | methods that allows us to insert an additional fact to our premises | `apply (insert dvd_mult [of 2 8]` | Example will insert the premise: `⋀b 8 dvd 2 ⟹   8 dvd b * 2` into list of premises. Any unknown variables in theorem will be universally quantified |
+| `subgoal_tac` | allows us to insert an arbitrary formula that we can use to prove the current goal, but we will have to prove later as a separate subgoal | `apply (subgoal_tac "1=0")` | In the given example, we can use `1 = 0` to (trivially) prove the current goal, but we will then have to prove it as a separate subgoal given the current premises |
+| `+` | suffixing a method with `+` expresses one or more repetitions | `by (drule mp, assumption)+` | |
+| `\|` | separating two methods by `\|` tries applying the first, and if that fails applies the second | `by (drule mp, (assumption|arith))+`  | |
+| `?` | suffixing a method with `?` expresses zero or one repetitions of a method | | `(m+)?` expresses zero or more repetitions of method `m` |
+| `pr` | changes the number of subgoals shown in output | | |
+| `defer` | moves current subgoal to the last position | | |
+| `prefer` | moves the specified subgoal to be the current subgoal | | useful for tring to prove a doubtful subgoal before moving onto the easier ones |
 
 ## Proof methods
 ### Simplification
@@ -81,10 +104,15 @@ Heuristics:
 - the RHS of an equation should be simpler than the LHSdead
 - `apply(induct_tac a and b)` used to induct on mutually recursive datatype
 
+## Tactics
+| `rename_tac` | renames arbitrary variables (⋀ - quantified) to the provided names | `apply (rename_tac v w)` | If the number of provided variables is less than the number of arbitrary variables, the rightmost ones are renamed |
+| fruel | acts like `drule`, but copies the selected assumption rather than replacing it | |
+
 ## Rules
-All of the supplied rules will be applied automatically by automation procedures
+All of the supplied rules will be applied automatically by automation procedures.
+You can see a full list of the types of all rules using `print_rules`
 ### Introduction and elimination rules
-Introduction (introduce a logical operator) rules are applied by `apply (rule ...)` elimination (eliminate logical operator) rules can also be applied by `apply (erule ...)` (which automatically matches assumption of rule with one from current premise).
+Introduction (introduce a logical operator, applies to conclusion) rules are applied by `apply (rule ...)` elimination (eliminate logical operator, applies to premise) rules can also be applied by `apply (erule ...)` (which automatically matches assumption of rule with one from current premise).
 Act on instance of major premise.
 `apply (intro <intro_rule>)` repeatedly applys the provied introduction rule
 | rule name | explaination | type | notes |
@@ -101,6 +129,8 @@ Act on instance of major premise.
 | `impE` | elimination rule for implication |  ⟦?P ⟶ ?Q; ?P; ?Q ⟹ ?R⟧ ⟹ ?R | |
 | `notI` | introduction rule for negation | (?P ⟹ False) ⟹ ¬ ?P | |
 | `notE` | elimination rule for negation |  ⟦¬ ?P; ?P⟧ ⟹ ?R | |
+| `exE` | elimination rule for existential quantification | ?P ?x ⟹ ∃x. ?P x | |
+| `exI` | introduction rule for existential quantification | ⟦∃x. ?P x; ⋀x. ?P x ⟹ ?Q⟧ ⟹ ?Q | |
 
 ### Destruction rules
 Take apart and destroy a premise. Applied by : `apply (drule ...)`
@@ -108,12 +138,25 @@ Take apart and destroy a premise. Applied by : `apply (drule ...)`
 |---|---|---|
 | `conjunct1` | exposes first operand of conjunction | ?P ∧ ?Q ⟹ ?P |
 | `conjunct2` | exposes second operand of conjunction | ?P ∧ ?Q ⟹ ?Q |
+| `spec` | specialise universal formula to a particular term | ∀x. ?P x ⟹ ?P ?x |
+| `mp` | modus ponens | ⟦?P ⟶ ?Q; ?P⟧ ⟹ ?Q |
+| `the_equality` | definition of definite description | ⟦?P ?a; ⋀x. ?P x ⟹ x = ?a⟧ ⟹ (THE x. ?P x) = ?a
+| `some_equality` | definition of Hilbert's ε-operator | ⟦?P ?a; ⋀x. ?P x ⟹ x = ?a⟧ ⟹ (SOME x. ?P x) = ?a |
 
 ### Other rules
 | rule name | explaination | type | |
 |---|---|---|
 | ssubst | Substitution rule: a predicate / function holds given the appropriate substiution | ⟦?t = ?s; ?P ?s⟧ ⟹ ?P ?t | Provides more control than simplification |
 
+## Automation
+Search works by backtracking to most recent application of unsafe rule:
+- safe rule: a rule that can be applied backwards without losing information
+- unsafe rule: a rule that loses information, maybe transforming sub-goal to be unsolvable
+`clarify`: automatically simplifies the goal as much as possible using safe rules
+`clarisimp`: interleaves `clarify` and `simp`
+`force`: like auto combines classical reasoning and simplificaiton, but will fail (rather than change proof-state) when it can't fully prove goal. Also tries harder than `auto`, so can take longer to terminate. Also performs higher-order unification (unlike `blast`)
+`best`: like `fast`, but uses best-first search rather than depth first search. Slower, but less susceptile to divergence.
+TODO: maybe a table comparing automation methods?
 
 
 
@@ -123,6 +166,7 @@ Take apart and destroy a premise. Applied by : `apply (drule ...)`
 - `simp: "..."`: searches specifically for rewrite rules
 - `name: ...` searches for theorems by name
 - can negate search criteria: `-name: foo` mathes all theorems who's name does not contain foo
+- can find rules that much current goal using search criteria: `intro`, `elim` and `dest`
 
 
 ## Tips:
@@ -143,6 +187,8 @@ Take apart and destroy a premise. Applied by : `apply (drule ...)`
 | symbol | what to enter |
 |---|---|
 |α | `\<alpha> |
+| ι | THE |
+| ε | SOME |
 etc for greek letters
 \<A>
 \<AA>
