@@ -66,7 +66,23 @@ A cheat sheet for Isabelle/ Isar/ HOL
 | `?` | suffixing a method with `?` expresses zero or one repetitions of a method | | `(m+)?` expresses zero or more repetitions of method `m` |
 | `pr` | changes the number of subgoals shown in output | | |
 | `defer` | moves current subgoal to the last position | | |
-| `prefer` | moves the specified subgoal to be the current subgoal | | useful for tring to prove a doubtful subgoal before moving onto the easier ones |
+| `prefer <subgoal_number>` | moves the specified subgoal to be the current subgoal | | useful for tring to prove a doubtful subgoal before moving onto the easier ones |
+| `thm <name_1> ... <name_n>` | prints the named theorems | | |
+| `term <term_string>` | prints out out the given string as a term in the current context| | also prints out type of provided term |
+| bounded quantifier | universal or existential quantifier that is not over the entire domain, but instead bounds the domain using a predicate | | |
+| `Collect P` | Same as `{x. P x}` | | |
+| `` ` `` | image of a set under a function | `('a ⇒ 'b) ⇒ 'a set ⇒ 'b set` | | NB `image_def`:  ``?f ` ?A = {y. ∃x∈?A. y = ?f x}``
+| `range f` | The range of the function `f` | | ``range f ≡ f ` UNIV`` |
+| ``-` `` | Inverse image | | NB `vimage_def`: ``?f -` ?B ≡ {x. ?f x ∈ ?B}``
+| `◦` | function composition | | written `\<circ>` |
+| `O` | relation composition | | It is the capital letter O |
+| `R^-1` | converse of relation | | `((?a, ?b) ∈ ?r^-1) = ((?b, ?a) ∈ ?r)`
+| <pre> \`\` </pre> | Image of a set under a relation | | |
+| `R^*` | reflexive transitive closure | | `rtrancl_unfold`: `?r⇧* = Id ∪ ?r⇧* O ?r`. Can induct over the reflexive transitive closure
+| `typedecl` | forward declare a new type. Defines nothing about it but its existence | | Usefule when a type can be viewed as a (type) parameter of the theory. |
+| `consts` | defines an arbitrary but fixed thing | | |
+
+
 
 ## Proof methods
 ### Simplification
@@ -77,7 +93,8 @@ Definition: "repeated application of equations from left to right" or equivalent
 - `definition`s are by default not added to rewrite rules
     * defining `f x y ≡ t` means `f` can only be unfolded when it is applied to two arguments, instead define as `f ≡ λx y.t` to unfold all occurences
     * Also have `unfold` method that will just unfold specified definitions: `apply (unfold xor_def)` 
-    * To simplify let expressions: `apply (simp add: Let_def)`
+    * type of provided terme To simplify l
+t expressions: `apply (simp add: Let_def)`
 - Tool used to perform simplification in Isabelle is called *simplifier*
 - simplification can not terminate if for example `f(x) = g(x)` and `g(x) = f(x)` are in rewrite rules
 - assumptions are included in simplification rules.
@@ -131,6 +148,7 @@ Act on instance of major premise.
 | `notE` | elimination rule for negation |  ⟦¬ ?P; ?P⟧ ⟹ ?R | |
 | `exE` | elimination rule for existential quantification | ?P ?x ⟹ ∃x. ?P x | |
 | `exI` | introduction rule for existential quantification | ⟦∃x. ?P x; ⋀x. ?P x ⟹ ?Q⟧ ⟹ ?Q | |
+| `set_eqI` | Principle of set extensionaity: two sets are equal if they have the same members| (⋀x. (x ∈ ?A) = (x ∈ ?B)) ⟹ ?A = ?B |
 
 ### Destruction rules
 Take apart and destroy a premise. Applied by : `apply (drule ...)`
@@ -144,9 +162,13 @@ Take apart and destroy a premise. Applied by : `apply (drule ...)`
 | `some_equality` | definition of Hilbert's ε-operator | ⟦?P ?a; ⋀x. ?P x ⟹ x = ?a⟧ ⟹ (SOME x. ?P x) = ?a |
 
 ### Other rules
-| rule name | explaination | type | |
+| rule name | explaination | type |
 |---|---|---|
-| ssubst | Substitution rule: a predicate / function holds given the appropriate substiution | ⟦?t = ?s; ?P ?s⟧ ⟹ ?P ?t | Provides more control than simplification |
+| ssubst | Substitution rule: a predicate / function holds given the appropriate substiution | `⟦?t = ?s; ?P ?s⟧ ⟹ ?P ?t` | Provides more control than simplification |
+| `insert_is_Un` | Inserting an element into a set is the same as taking a union of the singletone set containing that element and the set | `insert ?a ?A = {?a} ∪ ?A` |
+| `ext` | principle of functional extensionalty | `(⋀x. ?f x = ?g x) ⟹ ?f = ?g` |
+| `fun_upd_apply` | Allows update of a function for a particular argument-valuation pair | `(?f(?x := ?y)) ?z = (if ?z = ?x then ?y else ?f ?z)` |
+
 
 ## Automation
 Search works by backtracking to most recent application of unsafe rule:
@@ -176,12 +198,21 @@ TODO: maybe a table comparing automation methods?
 - must define something before you use it
 - best way to quantify over a variable `x` in list `xs` is to do, `x ∈ set xs`
 - best to stick to using `Suc` and `O`, since definition of constant `1::nat` is not automatically unfolded by all commands
+- In harder proofs may need to apply `subsetD` (`⟦?A ⊆ ?B; ?c ∈ ?A⟧ ⟹ ?c ∈ ?B`) providing explicit `?c`
+- May be  necessary to use `bspec` (`⟦∀x∈?A. ?P x; ?x ∈ ?A⟧ ⟹ ?P ?x`) with an explicit `?x`
+- May be  necessary to use `bexI` (`⟦?P ?x; ?x ∈ ?A⟧ ⟹ ∃x∈?A. ?P x`) with an explicit `?x`
+- May be  necessary to use `UN_I` (⟦?a ∈ ?A; ?b ∈ ?B ?a⟧ ⟹ ?b ∈ ⋃ (?B ` ?A) with an explicit `?x`
 
 ## Gotchas
 - Simplification may not terminate due to automatic splitting of if-statements, may need to rewrite function to use `case` statements instead
 
 ## Misc
 - <pre>apply <something else> by <assumption></pre> tries to proove all remaining subgoals using assumption (if successful no need for `done`)
+- Both set complement and difference are denoted by minus sign
+- Empty set denoted by `{}` (type is `'a set`)
+- Universal set denoted by: `UNIV` (type is `'a set`)
+- Can use `≤` for subset if operands are of type `'a set`
+- `{a, b}` abbreviates `insert a (insert b {})`
 
 ## Jedit shortcuts
 | symbol | what to enter |
@@ -203,3 +234,7 @@ etc for greek letters
 ∈
 ×
 ≡ 
+⊆
+⊂
+| ◦ | \<circ>
+|≤ | <=}
